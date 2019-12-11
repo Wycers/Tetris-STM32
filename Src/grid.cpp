@@ -15,6 +15,8 @@ void Grid::set_background_color(uint16_t color) {
 void Grid::set_start_point(uint16_t sx, uint16_t sy) {
     this->sx = sx;
     this->sy = sy;
+    this->ex = this->sx + col * col_width;
+    this->ey = this->sy + row * row_height;
 }
 
 void Grid::set_end_point(uint16_t ex, uint16_t ey) {
@@ -47,6 +49,7 @@ void Grid::set_row(uint16_t row, uint16_t row_height) {
 }
 
 void Grid::draw(uint16_t x, uint16_t y, uint16_t color) {
-    LCD_Fill(this->sx + x * 12 + 1, this->sy + y * 12 + 1, this->sx + x * 12 + 12 - 1, this->sy + y * 12 + 12 - 1, color);
+    LCD_Fill(this->sx + x * this->col_width + 1, this->sy + y * this->row_height + 1,
+             this->sx + (x + 1) * col_width - 1, this->sy + (y + 1) * row_height - 1, color);
 }
 

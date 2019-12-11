@@ -30,6 +30,7 @@
 /* USER CODE BEGIN Includes */
 #include "lcd.h"
 #include "grid.h"
+#include "box.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,8 +41,8 @@ typedef unsigned char uchar;
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MAX_X 12
-#define MAX_Y 21
+#define MAX_X 13
+#define MAX_Y 22
 #define MAX_C 7
 /* USER CODE END PD */
 
@@ -55,53 +56,52 @@ typedef unsigned char uchar;
 /* USER CODE BEGIN PV */
 
 int map[MAX_X][MAX_Y] = {0};
-int curbox[4][4];
 int curx, cury;
-int nextbox[4][4];
+int nextbox[2];
 int scro, key_value;
 int level;
-int box[MAX_C][4][4] = {
-        {{0, 0, 0, 0},
-                {0, 0, 0, 0},
-                {1, 1, 1, 1},
-                {0, 0, 0, 0}},
+box curbox, block[MAX_C] = {
+        box({{0, 0, 0, 0},
+             {0, 0, 0, 0},
+             {1, 1, 1, 1},
+             {0, 0, 0, 0}}, RED),
+        box({{0, 0, 0, 0},
+             {0, 0, 1, 0},
+             {0, 1, 1, 1},
+             {0, 0, 0, 0}}, GRAY),
 
-        {{0, 0, 0, 0},
-                {0, 0, 1, 0},
-                {0, 1, 1, 1},
-                {0, 0, 0, 0}},
+        box({{0, 0, 0, 0},
+             {0, 1, 1, 0},
+             {0, 0, 1, 1},
+             {0, 0, 0, 0}}, CYAN),
 
-        {{0, 0, 0, 0},
-                {0, 1, 1, 0},
-                {0, 0, 1, 1},
-                {0, 0, 0, 0}},
+        box({{0, 0, 0, 0},
+             {0, 0, 1, 1},
+             {0, 1, 1, 0},
+             {0, 0, 0, 0}}, BROWN),
 
-        {{0, 0, 0, 0},
-                {0, 0, 1, 1},
-                {0, 1, 1, 0},
-                {0, 0, 0, 0}},
+        box({{0, 0, 0, 0},
+             {0, 1, 1, 0},
+             {0, 0, 1, 0},
+             {0, 0, 1, 0}}, GBLUE),
 
-        {{0, 0, 0, 0},
-                {0, 1, 1, 0},
-                {0, 0, 1, 0},
-                {0, 0, 1, 0}},
+        box({{0, 0, 0, 0},
+             {0, 0, 1, 1},
+             {0, 0, 1, 0},
+             {0, 0, 1, 0}}, GREEN),
 
-        {{0, 0, 0, 0},
-                {0, 0, 1, 1},
-                {0, 0, 1, 0},
-                {0, 0, 1, 0}},
-
-        {{0, 0, 0, 0},
-                {0, 1, 1, 0},
-                {0, 1, 1, 0},
-                {0, 0, 0, 0}},
+        box({{0, 0, 0, 0},
+             {0, 1, 1, 0},
+             {0, 1, 1, 0},
+             {0, 0, 0, 0}}, BRRED),
 
 };
 
+Grid mainPanel, boxPanel[2];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-void SystemClock_Config(void);
+void SystemClock_Config();
 
 void rotate();
 
@@ -147,29 +147,27 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     }
 }
 
-void rotateBox(int box1[4][4], int box2[4][4]) //��תbox1��box2
-{
-    int x, y;
-    for (x = 0; x < 4; x++)
-        for (y = 3; y >= 0; y--)
-            box2[x][y] = box1[y][3 - x];
+void init() {
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+    srand(HAL_ADC_GetValue(&hadc1));
+    for (int i = 0; i < 10; ++i)
+        srand(random());
+
+    nextbox[0] = random() % MAX_C;
+    nextbox[1] = random() % MAX_C;
 }
 
 void rebuidNext() {
-    HAL_ADC_Start(&hadc1);
-    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-    int i = HAL_ADC_GetValue(&hadc1) % MAX_C;
-    for (int x = 0; x < 4; x++)
-        for (int y = 0; y < 4; y++)
-            nextbox[x][y] = box[i][x][y];
+    nextbox[0] = nextbox[1];
+    nextbox[1] = random() % MAX_C;
 }
 
-int test(int mx, int my, int box[4][4])
-{
+int test(int mx, int my, box box) {
     int x, y;
     for (x = 3; x >= 0; x--)
         for (y = 3; y >= 0; y--)
-            if (map[x + mx][y + my] && box[x][y])
+            if (map[x + mx][y + my] && box.get(x, y))
                 return 0;
     return 1;
 }
@@ -179,47 +177,34 @@ int newfall(void) {
     cury = 0;
     curx = 4;
 
-    for (x = 0; x < 4; x++)
-        for (y = 0; y < 4; y++)
-            curbox[x][y] = nextbox[x][y];
+    curbox = block[nextbox[0]];
     rebuidNext();
     return test(curx, cury, curbox);
 }
 
 void base_box(int x, int y, int c) {
-    if (c == 1)
-        LCD_Fill(10 + x * 12, 10 + y * 12, 20 + x * 12, 20 + y * 12, RED);
     if (c == 0)
-        LCD_Fill(10 + x * 12, 10 + y * 12, 20 + x * 12, 20 + y * 12, BLACK);
+        mainPanel.draw(x, y, BLACK);
+    if (c == 1)
+        mainPanel.draw(x, y, RED);
     if (c == 2)
-        LCD_Fill(10 + x * 12, 10 + y * 12, 20 + x * 12, 20 + y * 12, YELLOW);
+        mainPanel.draw(x, y, YELLOW);
 }
 
-void base_box_4X4(int x, int y, int c) {
-    if (c == 1)
-        LCD_Fill(180 + x * 12, 30 + y * 12, 190 + x * 12, 40 + y * 12, RED);
-    if (c == 0)
-        LCD_Fill(180 + x * 12, 30 + y * 12, 190 + x * 12, 40 + y * 12, BLACK);
-}
-
-void initMap(void) {
+void initMap() {
     int x, y;
-
     for (x = 0; x < MAX_X; x++)
-
         for (y = 0; y < MAX_Y; y++) {
-            if (x < 1 || x > 10 || y > 19)
+            if (x < 1 || x > 11 || y > 20)
                 map[x][y] = 1;
-
             else
                 map[x][y] = 0;
         }
 }
 
-void dis_map(void) {
+void dis_map() {
     int i, j;
     for (i = 0; i < MAX_X; i++)
-
         for (j = 0; j < MAX_Y; j++) {
             if (map[i][j])
                 base_box(i, j, 2);
@@ -228,71 +213,54 @@ void dis_map(void) {
         }
 }
 
-void dis_box(int x, int y, int c_box[4][4]) {
-    int i, j;
-    for (i = 3; i >= 0; i--) {
-        for (j = 0; j < 4; j++)
-            if (c_box[i][j])
-                base_box(x + i, y + j, 1);
+void dis_box(int x, int y, box c_box) {
+    for (int i = 3; i >= 0; i--) {
+        for (int j = 0; j < 4; j++)
+            if (c_box.get(i, j))
+                mainPanel.draw(x + i, y + j, c_box.get_color());
     }
 }
 
-void dis_next_box(void) {
+void dis_next_box() {
     int i, j;
-    for (i = 3; i >= 0; i--)
-        for (j = 0; j < 4; j++) {
-            if (nextbox[i][j])
-                base_box_4X4(i, j, 1);
-            else
-                base_box_4X4(i, j, 0);
-        }
+    for (int t = 0; t < 2; ++t)
+        for (i = 3; i >= 0; i--)
+            for (j = 0; j < 4; j++)
+                boxPanel[t].draw(i, j, block[nextbox[t]].get(i, j) ? RED : BLACK);
 }
 
-void putBox(void)
-{
-    int x, y;
-    for (x = 3; x >= 0; x--)
-        for (y = 3; y >= 0; y--)
-            if (curbox[x][y])
-                map[x + curx][y + cury] = curbox[x][y];
+void putBox(void) {
+    for (int x = 3; x >= 0; x--)
+        for (int y = 3; y >= 0; y--)
+            if (curbox.get(x, y))
+                map[x + curx][y + cury] = curbox.get(x, y);
 }
 
 int drop(void) {
-    int newy;
-    newy = cury + 1;
+    int newy = cury + 1;
     if (test(curx, newy, curbox)) {
         cury = newy;
         return 1;
     }
-
     return 0;
 }
 
 void move(int dir) {
-    int newx;
-    if (dir)
-        newx = curx + 1;
-    else
-        newx = curx - 1;
+    int newx = dir ? curx + 1 : curx - 1;
     if (test(newx, cury, curbox)) {
         curx = newx;
     }
 }
 
 void rotate(void) {
-    int x, y;
-    int newbox[4][4];
-    rotateBox(curbox, newbox);
-    if (test(curx, cury, newbox)) {
-        for (x = 0; x < 4; x++)
-            for (y = 0; y < 4; y++)
-                curbox[x][y] = newbox[x][y];
-    }
+    box newbox = box(&curbox);
+    if (test(curx, cury, newbox))
+        curbox = newbox;
 }
 
 void Get_scroce(void) {
-    LCD_ShowNum(160, 140, scro, 5, 16);
-    LCD_ShowNum(160, 230, level, 2, 16);
+    LCD_ShowNum(180, 160, scro, 5, 16);
+    LCD_ShowNum(180, 230, level, 2, 16);
 }
 
 void clear_line(void) {
@@ -316,33 +284,28 @@ void clear_line(void) {
             scro += 100;
             if (scro >= 1000)
                 level++;
-            Get_scroce();
         }
     }
 }
 
 void display_init() {
-    Grid grid;
-    grid.set_start_point(10, 10);
-    grid.set_row(21, 12);
-    grid.set_col(13, 12);
-    grid.set_background_color(BLACK);
-    grid.set_line_color(BLUE);
-    grid.display();
+    mainPanel = Grid(22, 13, 12, 12);
+    mainPanel.set_start_point(10, 10);
+    mainPanel.set_background_color(BLACK);
+    mainPanel.set_line_color(BLUE);
+    mainPanel.display();
 
-    grid.set_start_point(180, 30);
-    grid.set_row(4, 12);
-    grid.set_col(4, 12);
-    grid.set_background_color(BLACK);
-    grid.set_line_color(MAGENTA);
-    grid.display();
+    boxPanel[0] = Grid(4, 4, 12, 12);
+    boxPanel[0].set_start_point(180, 30);
+    boxPanel[0].set_background_color(BLACK);
+    boxPanel[0].set_line_color(MAGENTA);
+    boxPanel[0].display();
 
-    grid.set_start_point(180, 100);
-    grid.set_row(4, 12);
-    grid.set_col(4, 12);
-    grid.set_background_color(BLACK);
-    grid.set_line_color(MAGENTA);
-    grid.display();
+    boxPanel[1] = Grid(4, 4, 12, 12);
+    boxPanel[1].set_start_point(180, 100);
+    boxPanel[1].set_background_color(BLACK);
+    boxPanel[1].set_line_color(MAGENTA);
+    boxPanel[1].display();
 
     POINT_COLOR = BLACK;
     initMap();
@@ -385,49 +348,47 @@ int main(void) {
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     POINT_COLOR = BLACK;
-    dis_map();
 //    Font_Init();
+    init();
     display_init();
-//    LCD_DrawRectangle(1, 264, 238, 319);
+    LCD_DrawRectangle(5, 280, 235, 315);
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while (1) {
         POINT_COLOR = RED;
-        // LCD_ShowString(5, 265, 200, 16, 16, "Press any key.... ");
+        LCD_ShowString(10, 280, 200, 16, 16, (uint8_t *) "Press any key.... ");
         key_value = 0;
         while (key_value == 0);
-        // LCD_ShowString(5, 265, 200, 16, 16, "                  ");
+        LCD_ShowString(5, 265, 200, 16, 16, (uint8_t *) "                  ");
         rebuidNext();
         display_init();
         dis_map();
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        while (1) //һ����Ϸ��ѭ��
-        {
+        while (1) {
             if (!newfall()) {
                 POINT_COLOR = RED;
-                // LCD_ShowString(5, 265, 200, 16, 16, "The end of the game ");
-                // LCD_ShowString(5, 298, 200, 16, 16, "Press any key.... ");
-                // LCD_ShowString(5, 281, 200, 16, 16, "make persistent efforts!");
+                LCD_ShowString(5, 265, 200, 16, 16, (uint8_t *) "The end of the game ");
+                LCD_ShowString(5, 298, 200, 16, 16, (uint8_t *) "Press any key.... ");
+                LCD_ShowString(5, 281, 200, 16, 16, (uint8_t *) "make persistent efforts!");
                 key_value = 0;
                 while (key_value == 0);
                 break;
             }
-            // LCD_ShowString(5, 265, 200, 16, 16, "                    ");
-            // LCD_ShowString(5, 298, 200, 16, 16, "                  ");
-            // LCD_ShowString(5, 281, 200, 16, 16, "                        ");
-            dis_next_box(); //��ʾ��һ��
-            while (1)        //һ��ͼ�εĽ���ѭ��
-            {
+            Get_scroce();
+            LCD_ShowString(5, 265, 200, 16, 16, (uint8_t *) "                    ");
+            LCD_ShowString(5, 298, 200, 16, 16, (uint8_t *) "                  ");
+            LCD_ShowString(5, 281, 200, 16, 16, (uint8_t *) "                        ");
+            dis_next_box();
+            while (1) {
                 if (!drop()) {
                     putBox();
                     clear_line();
                     break;
                 }
-
                 dis_map();
                 dis_box(curx, cury, curbox);
                 HAL_Delay((6 - level) * 100);
