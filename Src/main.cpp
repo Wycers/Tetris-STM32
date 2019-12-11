@@ -226,7 +226,7 @@ void dis_next_box() {
     for (int t = 0; t < 2; ++t)
         for (i = 3; i >= 0; i--)
             for (j = 0; j < 4; j++)
-                boxPanel[t].draw(i, j, block[nextbox[t]].get(i, j) ? RED : BLACK);
+                boxPanel[t].draw(i, j, block[nextbox[t]].get(i, j) ? block[nextbox[t]].get_color() : BLACK);
 }
 
 void putBox(void) {
