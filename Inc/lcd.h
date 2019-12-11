@@ -170,6 +170,10 @@ extern uint16_t  BACK_COLOR; //背景颜色.默认为白色
 #define LGRAYBLUE        0XA651 //浅灰蓝色(中间层颜色)
 #define LBBLUE           0X2B12 //浅棕蓝色(选择条目的反色)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void LCD_Init(void);													   	//初始化
 void LCD_DisplayOn(void);													//开显示
 void LCD_DisplayOff(void);													//关显示
@@ -195,6 +199,9 @@ void LCD_WriteRAM(uint16_t RGB_Code);
 void LCD_Scan_Dir(uint8_t dir);									//设置屏扫描方向
 void LCD_Display_Dir(uint8_t dir);								//设置屏幕显示方向
 void LCD_Set_Window(uint16_t sx,uint16_t sy,uint16_t width,uint16_t height);	//设置窗口
+#ifdef __cplusplus
+}
+#endif
 
 //写数据函数
 #define LCD_WR_DATA(data){\

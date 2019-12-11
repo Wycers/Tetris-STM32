@@ -164,9 +164,8 @@ void rebuidNext() {
             nextbox[x][y] = box[i][x][y];
 }
 
-int test(int mx, int my, int box[4][4]) /*����box��map��mx,myλ�����Ƿ�����½*/
-{                                        /*�������ؼ���һ������,���ж��Ƿ�����ǿճ��?*/
-    /*���㷨���Ǻܼ򵥵�*/
+int test(int mx, int my, int box[4][4])
+{
     int x, y;
     for (x = 3; x >= 0; x--)
         for (y = 3; y >= 0; y--)
@@ -179,11 +178,11 @@ int newfall(void) {
     int x, y;
     cury = 0;
     curx = 4;
-    //rebuidNext();                                 //���²�����һ��box
+
     for (x = 0; x < 4; x++)
         for (y = 0; y < 4; y++)
-            curbox[x][y] = nextbox[x][y]; //��nextbox���Ƶ���ǰcurbox
-    rebuidNext();                          //���²�����һ��box
+            curbox[x][y] = nextbox[x][y];
+    rebuidNext();
     return test(curx, cury, curbox);
 }
 
@@ -301,7 +300,7 @@ void clear_line(void) {
     int dx, dy;
     int fullflag;
     for (y = 1; y < MAX_Y - 1; y++) {
-        fullflag = 1; /*����Ϊ��*/
+        fullflag = 1;
         for (x = 1; x < MAX_X - 1; x++) {
             if (!map[x][y]) {
                 fullflag = 0;
@@ -324,20 +323,26 @@ void clear_line(void) {
 
 void display_init() {
     Grid grid;
+    grid.set_start_point(10, 10);
+    grid.set_row(21, 12);
+    grid.set_col(13, 12);
+    grid.set_background_color(BLACK);
+    grid.set_line_color(BLUE);
+    grid.display();
 
-    Grid_set_start_point(&grid, 10, 10);
-    Grid_set_row(&grid, 21, 12);
-    Grid_set_col(&grid, 13, 12);
-    Grid_set_background_color(&grid, BLACK);
-    Grid_set_line_color(&grid, BLUE);
-    Grid_draw(&grid);
+    grid.set_start_point(180, 30);
+    grid.set_row(4, 12);
+    grid.set_col(4, 12);
+    grid.set_background_color(BLACK);
+    grid.set_line_color(MAGENTA);
+    grid.display();
 
-    Grid_set_start_point(&grid, 180, 30);
-    Grid_set_row(&grid, 4, 12);
-    Grid_set_col(&grid, 4, 12);
-    Grid_set_background_color(&grid, BLACK);
-    Grid_set_line_color(&grid, MAGENTA);
-    Grid_draw(&grid);
+    grid.set_start_point(180, 100);
+    grid.set_row(4, 12);
+    grid.set_col(4, 12);
+    grid.set_background_color(BLACK);
+    grid.set_line_color(MAGENTA);
+    grid.display();
 
     POINT_COLOR = BLACK;
     initMap();
@@ -390,10 +395,10 @@ int main(void) {
     /* USER CODE BEGIN WHILE */
     while (1) {
         POINT_COLOR = RED;
-        LCD_ShowString(5, 265, 200, 16, 16, "Press any key.... ");
+        // LCD_ShowString(5, 265, 200, 16, 16, "Press any key.... ");
         key_value = 0;
         while (key_value == 0);
-        LCD_ShowString(5, 265, 200, 16, 16, "                  ");
+        // LCD_ShowString(5, 265, 200, 16, 16, "                  ");
         rebuidNext();
         display_init();
         dis_map();
@@ -404,16 +409,16 @@ int main(void) {
         {
             if (!newfall()) {
                 POINT_COLOR = RED;
-                LCD_ShowString(5, 265, 200, 16, 16, "The end of the game ");
-                LCD_ShowString(5, 298, 200, 16, 16, "Press any key.... ");
-                LCD_ShowString(5, 281, 200, 16, 16, "make persistent efforts!");
+                // LCD_ShowString(5, 265, 200, 16, 16, "The end of the game ");
+                // LCD_ShowString(5, 298, 200, 16, 16, "Press any key.... ");
+                // LCD_ShowString(5, 281, 200, 16, 16, "make persistent efforts!");
                 key_value = 0;
                 while (key_value == 0);
                 break;
             }
-            LCD_ShowString(5, 265, 200, 16, 16, "                    ");
-            LCD_ShowString(5, 298, 200, 16, 16, "                  ");
-            LCD_ShowString(5, 281, 200, 16, 16, "                        ");
+            // LCD_ShowString(5, 265, 200, 16, 16, "                    ");
+            // LCD_ShowString(5, 298, 200, 16, 16, "                  ");
+            // LCD_ShowString(5, 281, 200, 16, 16, "                        ");
             dis_next_box(); //��ʾ��һ��
             while (1)        //һ��ͼ�εĽ���ѭ��
             {
