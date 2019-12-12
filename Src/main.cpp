@@ -152,7 +152,7 @@ void init() {
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
     srand(HAL_ADC_GetValue(&hadc1));
     for (int i = 0; i < 10; ++i)
-        srand(random());
+        srand(HAL_ADC_GetValue(&hadc1) + random());
 
     nextbox[0] = random() % MAX_C;
     nextbox[1] = random() % MAX_C;
@@ -288,6 +288,14 @@ void clear_line(void) {
     }
 }
 
+void display_clear() {
+    memset(map, 0, sizeof map);
+    for (int x = 0; x < MAX_X; x++)
+        map[x][MAX_Y - 1] = 1;
+    for (int y = 0; y < MAX_Y; y++)
+        map[0][y] = map[MAX_X - 1][y] = 1;
+}
+
 void display_init() {
     mainPanel = Grid(22, 13, 12, 12);
     mainPanel.set_start_point(10, 10);
@@ -308,7 +316,7 @@ void display_init() {
     boxPanel[1].display();
 
     POINT_COLOR = BLACK;
-    initMap();
+    display_clear();
 }
 /* USER CODE END 0 */
 
