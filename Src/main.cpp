@@ -31,6 +31,8 @@
 #include "lcd.h"
 #include "grid.h"
 #include "box.h"
+#include <vector>
+#include <cstring>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,7 +56,7 @@ typedef unsigned char uchar;
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+int cur_frame = 0;
 int map[MAX_X][MAX_Y] = {0};
 int curx, cury;
 int nextbox[2];
@@ -156,6 +158,27 @@ void init() {
 
     nextbox[0] = random() % MAX_C;
     nextbox[1] = random() % MAX_C;
+
+
+    mainPanel = Grid(22, 13, 12, 12);
+    mainPanel.set_start_point(10, 10);
+    mainPanel.set_background_color(BLACK);
+    mainPanel.set_line_color(BLUE);
+    mainPanel.display();
+
+    boxPanel[0] = Grid(4, 4, 12, 12);
+    boxPanel[0].set_start_point(180, 30);
+    boxPanel[0].set_background_color(BLACK);
+    boxPanel[0].set_line_color(MAGENTA);
+    boxPanel[0].display();
+
+    boxPanel[1] = Grid(4, 4, 12, 12);
+    boxPanel[1].set_start_point(180, 100);
+    boxPanel[1].set_background_color(BLACK);
+    boxPanel[1].set_line_color(MAGENTA);
+    boxPanel[1].display();
+
+    POINT_COLOR = BLACK;
 }
 
 void rebuidNext() {
@@ -173,7 +196,6 @@ int test(int mx, int my, box box) {
 }
 
 int newfall(void) {
-    int x, y;
     cury = 0;
     curx = 4;
 
@@ -182,34 +204,13 @@ int newfall(void) {
     return test(curx, cury, curbox);
 }
 
-void base_box(int x, int y, int c) {
-    if (c == 0)
-        mainPanel.draw(x, y, BLACK);
-    if (c == 1)
-        mainPanel.draw(x, y, RED);
-    if (c == 2)
-        mainPanel.draw(x, y, YELLOW);
-}
-
-void initMap() {
-    int x, y;
-    for (x = 0; x < MAX_X; x++)
-        for (y = 0; y < MAX_Y; y++) {
-            if (x < 1 || x > 11 || y > 20)
-                map[x][y] = 1;
-            else
-                map[x][y] = 0;
-        }
-}
-
 void dis_map() {
-    int i, j;
-    for (i = 0; i < MAX_X; i++)
-        for (j = 0; j < MAX_Y; j++) {
+    for (int i = 0; i < MAX_X; i++)
+        for (int j = 0; j < MAX_Y; j++) {
             if (map[i][j])
-                base_box(i, j, 2);
+                mainPanel.draw(i, j, YELLOW);
             else
-                base_box(i, j, 0);
+                mainPanel.draw(i, j, BLACK);
         }
 }
 
@@ -263,7 +264,7 @@ void Get_scroce(void) {
     LCD_ShowNum(180, 230, level, 2, 16);
 }
 
-void clear_line(void) {
+void clear_line() {
     int x, y;
     int dx, dy;
     int fullflag;
@@ -281,7 +282,7 @@ void clear_line(void) {
                     map[dx][dy] = map[dx][dy - 1];
             for (dx = 1; dx < MAX_X - 1; dx++)
                 map[dx][dy] = 0;
-            scro += 100;
+            scro += 233;
             if (scro >= 1000)
                 level++;
         }
@@ -296,28 +297,6 @@ void display_clear() {
         map[0][y] = map[MAX_X - 1][y] = 1;
 }
 
-void display_init() {
-    mainPanel = Grid(22, 13, 12, 12);
-    mainPanel.set_start_point(10, 10);
-    mainPanel.set_background_color(BLACK);
-    mainPanel.set_line_color(BLUE);
-    mainPanel.display();
-
-    boxPanel[0] = Grid(4, 4, 12, 12);
-    boxPanel[0].set_start_point(180, 30);
-    boxPanel[0].set_background_color(BLACK);
-    boxPanel[0].set_line_color(MAGENTA);
-    boxPanel[0].display();
-
-    boxPanel[1] = Grid(4, 4, 12, 12);
-    boxPanel[1].set_start_point(180, 100);
-    boxPanel[1].set_background_color(BLACK);
-    boxPanel[1].set_line_color(MAGENTA);
-    boxPanel[1].display();
-
-    POINT_COLOR = BLACK;
-    display_clear();
-}
 /* USER CODE END 0 */
 
 /**
@@ -358,7 +337,7 @@ int main(void) {
     POINT_COLOR = BLACK;
 //    Font_Init();
     init();
-    display_init();
+    display_clear();
     LCD_DrawRectangle(5, 280, 235, 315);
     /* USER CODE END 2 */
 
@@ -371,7 +350,7 @@ int main(void) {
         while (key_value == 0);
         LCD_ShowString(15, 290, 200, 16, 16, (uint8_t *) "                  ");
         rebuidNext();
-        display_init();
+        display_clear();
         dis_map();
         /* USER CODE END WHILE */
 
