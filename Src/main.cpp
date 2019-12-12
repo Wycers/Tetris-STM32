@@ -366,10 +366,10 @@ int main(void) {
     /* USER CODE BEGIN WHILE */
     while (1) {
         POINT_COLOR = RED;
-        LCD_ShowString(10, 280, 200, 16, 16, (uint8_t *) "Press any key.... ");
+        LCD_ShowString(15, 290, 200, 16, 16, (uint8_t *) "Press any key.... ");
         key_value = 0;
         while (key_value == 0);
-        LCD_ShowString(5, 265, 200, 16, 16, (uint8_t *) "                  ");
+        LCD_ShowString(15, 290, 200, 16, 16, (uint8_t *) "                  ");
         rebuidNext();
         display_init();
         dis_map();
@@ -379,17 +379,14 @@ int main(void) {
         while (1) {
             if (!newfall()) {
                 POINT_COLOR = RED;
-                LCD_ShowString(5, 265, 200, 16, 16, (uint8_t *) "The end of the game ");
-                LCD_ShowString(5, 298, 200, 16, 16, (uint8_t *) "Press any key.... ");
-                LCD_ShowString(5, 281, 200, 16, 16, (uint8_t *) "make persistent efforts!");
+                LCD_ShowString(15, 290, 200, 16, 16, (uint8_t *) "Game over!");
                 key_value = 0;
                 while (key_value == 0);
                 break;
             }
             Get_scroce();
-            LCD_ShowString(5, 265, 200, 16, 16, (uint8_t *) "                    ");
-            LCD_ShowString(5, 298, 200, 16, 16, (uint8_t *) "                  ");
-            LCD_ShowString(5, 281, 200, 16, 16, (uint8_t *) "                        ");
+            LCD_ShowString(15, 281, 200, 16, 16, (uint8_t *) "                  ");
+            LCD_ShowString(15, 298, 200, 16, 16, (uint8_t *) "                  ");
             dis_next_box();
             while (1) {
                 if (!drop()) {
