@@ -9,19 +9,19 @@
 #include <cstdint>
 
 class box {
-    bool mat[4][4];
-    uint16_t color;
+    bool mat[4][4]{};
+    uint16_t color{};
 
 public:
-    box() {}
+    box() = default;
 
-    box(box *b);
+    explicit box(box *b);
 
-    box(std::initializer_list<std::initializer_list<bool>> lists, uint16_t color) {
+    box(std::initializer_list<std::initializer_list<int>> lists, uint16_t color) {
         int x = 0;
-        for (std::initializer_list<bool> list : lists) {
-            for (const bool &i : list) {
-                mat[x / 4][x % 4] = i;
+        for (std::initializer_list<int> list : lists) {
+            for (const int &i : list) {
+                this->mat[x / 4][x % 4] = i == 1;
                 ++x;
             }
         }

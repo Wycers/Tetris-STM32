@@ -43,8 +43,8 @@ typedef unsigned char uchar;
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MAX_X 13
-#define MAX_Y 22
+#define MAX_X 22
+#define MAX_Y 13
 #define MAX_C 7
 /* USER CODE END PD */
 
@@ -60,7 +60,7 @@ int cur_frame = 0;
 int map[MAX_X][MAX_Y] = {0};
 int curx, cury;
 int nextbox[2];
-int scro, key_value;
+int score, key_value;
 int level;
 box curbox, block[MAX_C] = {
         box({{0, 0, 0, 0},
@@ -105,9 +105,7 @@ Grid mainPanel, boxPanel[2];
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config();
 
-void rotate();
 
-void move(int dir);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -115,11 +113,7 @@ void move(int dir);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-int flag = 0;
-
-void HAL_WWDG_EarlyWakeupCallback(WWDG_HandleTypeDef *hwwdg) {
-    HAL_WWDG_Refresh(hwwdg);
-}
+void rotate();
 
 void move(int dir);
 
@@ -195,9 +189,9 @@ int test(int mx, int my, box box) {
     return 1;
 }
 
-int newfall(void) {
-    cury = 0;
-    curx = 4;
+int newfall() {
+    curx = 0;
+    cury = 4;
 
     curbox = block[nextbox[0]];
     rebuidNext();
@@ -230,71 +224,69 @@ void dis_next_box() {
                 boxPanel[t].draw(i, j, block[nextbox[t]].get(i, j) ? block[nextbox[t]].get_color() : BLACK);
 }
 
-void putBox(void) {
+void putBox() {
     for (int x = 3; x >= 0; x--)
         for (int y = 3; y >= 0; y--)
             if (curbox.get(x, y))
                 map[x + curx][y + cury] = curbox.get(x, y);
 }
 
-int drop(void) {
-    int newy = cury + 1;
-    if (test(curx, newy, curbox)) {
-        cury = newy;
+int drop() {
+    int newx = curx + 1;
+    if (test(newx, cury, curbox)) {
+        curx = newx;
         return 1;
     }
     return 0;
 }
 
 void move(int dir) {
-    int newx = dir ? curx + 1 : curx - 1;
-    if (test(newx, cury, curbox)) {
-        curx = newx;
+    int newy = dir ? cury + 1 : cury - 1;
+    if (test(curx, newy, curbox)) {
+        cury = newy;
     }
 }
 
-void rotate(void) {
+void rotate() {
     box newbox = box(&curbox);
     if (test(curx, cury, newbox))
         curbox = newbox;
 }
 
-void Get_scroce(void) {
-    LCD_ShowNum(180, 160, scro, 5, 16);
+void Get_scroce() {
+    LCD_ShowNum(180, 160, score, 5, 16);
     LCD_ShowNum(180, 230, level, 2, 16);
 }
 
-void clear_line() {
-    int x, y;
-    int dx, dy;
-    int fullflag;
-    for (y = 1; y < MAX_Y - 1; y++) {
-        fullflag = 1;
-        for (x = 1; x < MAX_X - 1; x++) {
+int clear_line() {
+    int x, y, flag, cnt = 0;
+    for (x = 1; x < MAX_X - 1; ++x) {
+        flag = 1;
+        for (y = 1; y < MAX_Y - 1; ++y) {
             if (!map[x][y]) {
-                fullflag = 0;
+                flag = 0;
                 break;
             }
         }
-        if (fullflag) {
-            for (dy = y; dy > 0; dy--)
-                for (dx = 1; dx < MAX_X - 1; dx++)
-                    map[dx][dy] = map[dx][dy - 1];
-            for (dx = 1; dx < MAX_X - 1; dx++)
-                map[dx][dy] = 0;
-            scro += 233;
-            if (scro >= 1000)
-                level++;
+        if (flag) {
+            for (int dx = MAX_X - 1; dx > 0; --dx) {
+                for (int dy = 1; dy < MAX_Y - 1; ++dy)
+                    map[dx][dy] = map[dx - 1][dy];
+            }
+            for (int dy = 1; dy < MAX_Y - 1; ++dy)
+                map[0][dy] = 0;
+            ++cnt;
         }
     }
+    return cnt;
 }
 
 void display_clear() {
     memset(map, 0, sizeof map);
-    for (int x = 0; x < MAX_X; x++)
-        map[x][MAX_Y - 1] = 1;
-    for (int y = 0; y < MAX_Y; y++)
-        map[0][y] = map[MAX_X - 1][y] = 1;
+    for (auto &x : map)
+        x[0] = x[MAX_Y - 1] = 1;
+    for (int y = 0; y < MAX_Y; ++y)
+        map[MAX_X - 1][y] = 1;
 }
 
 /* USER CODE END 0 */
@@ -303,7 +295,7 @@ void display_clear() {
   * @brief  The application entry point.
   * @retval int
   */
-int main(void) {
+int main() {
     /* USER CODE BEGIN 1 */
     /* USER CODE END 1 */
 
@@ -343,11 +335,13 @@ int main(void) {
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
-    while (1) {
+    for (;;) {
         POINT_COLOR = RED;
         LCD_ShowString(15, 290, 200, 16, 16, (uint8_t *) "Press any key.... ");
         key_value = 0;
         while (key_value == 0);
+        score = 0;
+        level = 0;
         LCD_ShowString(15, 290, 200, 16, 16, (uint8_t *) "                  ");
         rebuidNext();
         display_clear();
@@ -355,7 +349,9 @@ int main(void) {
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        while (1) {
+        LCD_ShowString(15, 281, 200, 16, 16, (uint8_t *) "                  ");
+        LCD_ShowString(15, 298, 200, 16, 16, (uint8_t *) "                  ");
+        for (;;) {
             if (!newfall()) {
                 POINT_COLOR = RED;
                 LCD_ShowString(15, 290, 200, 16, 16, (uint8_t *) "Game over!");
@@ -364,13 +360,13 @@ int main(void) {
                 break;
             }
             Get_scroce();
-            LCD_ShowString(15, 281, 200, 16, 16, (uint8_t *) "                  ");
-            LCD_ShowString(15, 298, 200, 16, 16, (uint8_t *) "                  ");
             dis_next_box();
-            while (1) {
+            for (;;) {
                 if (!drop()) {
                     putBox();
-                    clear_line();
+                    int cnt = clear_line();
+                    score += cnt * 233;
+                    level = std::min(5, score / 500);
                     break;
                 }
                 dis_map();
@@ -386,7 +382,7 @@ int main(void) {
   * @brief System Clock Configuration
   * @retval None
   */
-void SystemClock_Config(void) {
+void SystemClock_Config() {
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
     RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};

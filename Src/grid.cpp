@@ -49,7 +49,7 @@ void Grid::set_row(uint16_t row, uint16_t row_height) {
 }
 
 void Grid::draw(uint16_t x, uint16_t y, uint16_t color) {
-    LCD_Fill(this->sx + x * this->col_width + 1, this->sy + y * this->row_height + 1,
-             this->sx + (x + 1) * col_width - 1, this->sy + (y + 1) * row_height - 1, color);
+    LCD_Fill(this->sx + y * col_width + 1, this->sy + x * this->row_height + 1,
+             this->sx + (y + 1) * col_width - 1, this->sy + (x + 1) * row_height - 1, color);
 }
 
