@@ -253,23 +253,27 @@ void rotate() {
         curbox = newbox;
 }
 
+void fall() {
+    while (drop());
+}
+
 void Get_scroce() {
     LCD_ShowNum(180, 160, score, 5, 16);
     LCD_ShowNum(180, 230, level, 2, 16);
 }
 
 int clear_line() {
-    int x, y, flag, cnt = 0;
-    for (x = 1; x < MAX_X - 1; ++x) {
+    int flag, cnt = 0;
+    for (int x = 1; x < MAX_X - 1; ++x) {
         flag = 1;
-        for (y = 1; y < MAX_Y - 1; ++y) {
+        for (int y = 1; y < MAX_Y - 1; ++y) {
             if (!map[x][y]) {
                 flag = 0;
                 break;
             }
         }
         if (flag) {
-            for (int dx = MAX_X - 1; dx > 0; --dx) {
+            for (int dx = x; dx > 0; --dx) {
                 for (int dy = 1; dy < MAX_Y - 1; ++dy)
                     map[dx][dy] = map[dx - 1][dy];
             }
@@ -288,6 +292,59 @@ void display_clear() {
     for (int y = 0; y < MAX_Y; ++y)
         map[MAX_X - 1][y] = 1;
 }
+
+extern "C" {
+uint8_t rxBuffer[20];
+
+HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *pData,
+                                      uint16_t Size);
+
+void USART1_IRQHandler(void) {
+    /* USER CODE BEGIN USART1_IRQn 0 */
+    /* USER CODE END USART1_IRQn 0 */
+    HAL_UART_IRQHandler(&huart1);
+    /* USER CODE BEGIN USART1_IRQn 1 */
+    HAL_UART_Receive_IT(&huart1, (uint8_t *) rxBuffer, 1);
+    /* USER CODE END USART1_IRQn 1 */
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == USART1) {
+        static unsigned char uRx_Data[1024] = {0};
+        static unsigned char uLength = 0;
+
+        if (rxBuffer[0] == '\n') {
+//            HAL_UART_Transmit(&huart1, (uint8_t *) uRx_Data, strlen((const char *) uRx_Data), 0xffff);
+            uRx_Data[uLength - 1] = '\0';
+            uLength = 0;
+            if (strcmp((const char *) uRx_Data, "l") == 0) {
+                move(0);
+                return;
+            }
+            if (strcmp((const char *) uRx_Data, "r") == 0) {
+                move(1);
+                return;
+            }
+            if (strcmp((const char *) uRx_Data, "u") == 0) {
+                rotate();
+                return;
+            }
+            if (strcmp((const char *) uRx_Data, "d") == 0) {
+                fall();
+                return;
+            }
+        } else {
+            uRx_Data[uLength] = rxBuffer[0];
+            uLength++;
+        }
+    }
+}
+
+}
+
+
+
+
 
 /* USER CODE END 0 */
 
@@ -318,6 +375,7 @@ int main() {
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     MX_USART1_UART_Init();
+    HAL_UART_Receive_IT(&huart1, (uint8_t *) rxBuffer, 1);
     MX_ADC1_Init();
     MX_TIM1_Init();
     /* USER CODE BEGIN 2 */
